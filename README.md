@@ -12,6 +12,56 @@ Please switch to the corresponding branch to view the code and documentation for
 
 <br>
 
+## ⚙️ Setup & Installation Guide
+
+Both projects in this repository are built using Python and Streamlit. To run either project locally, follow these complete, step-by-step instructions.
+
+**1. Clone the Repository**
+ First, download the project files to your local machine and navigate into the project folder.
+
+2. ## Switch to the Desired Project Branch
+Since the tasks are divided into branches, switch to the specific project you want to run:
+
+Bash
+# To run Task 1:
+git checkout iris-classification
+
+# OR, to run Task 2:
+git checkout car-sales-analysis
+
+3. ## Create a Virtual Environment (Recommended)
+It is best practice to create a virtual environment to prevent dependency conflicts.
+
+For Windows:
+
+Bash
+python -m venv venv
+venv\Scripts\activate
+For macOS and Linux:
+
+Bash
+python3 -m venv venv
+source venv/bin/activate
+
+4. ## Install Required Dependencies
+With your virtual environment activated, install the necessary Python libraries. Ensure you have a requirements.txt file in the branch, then run:
+
+Bash
+pip install -r requirements.txt
+(Note: If you do not have a requirements file generated yet, you can manually install the core stack for both projects by running: pip install streamlit pandas numpy scikit-learn matplotlib seaborn)
+
+5. ## Launch the Application
+Finally, start the Streamlit server:
+
+Bash
+streamlit run app.py
+(Note: Replace app.py if your main Python script has a different name).
+
+Once executed, Streamlit will automatically open a new tab in your default web browser hosting the interactive dashboard (usually accessible at http://localhost:8501).
+
+<br>
+
+
 - ## Task1:Iris Flower Intelligence & Predictive Engine
 
 An interactive Streamlit web application that provides exploratory data visualization and machine learning-powered species prediction for the Iris dataset.
