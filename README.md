@@ -16,10 +16,10 @@ Please switch to the corresponding branch to view the code and documentation for
 
 Both projects in this repository are built using Python and Streamlit. To run either project locally, follow these complete, step-by-step instructions.
 
-**1. Clone the Repository**
+1. ## Clone the Repository
  First, download the project files to your local machine and navigate into the project folder.
 
-2. ## Switch to the Desired Project Branch
+3. ## Switch to the Desired Project Branch
 Since the tasks are divided into branches, switch to the specific project you want to run:
 
 Bash
