@@ -19,13 +19,13 @@ Both projects in this repository are built using Python and Streamlit. To run ei
 1. ## Clone the Repository
  First, download the project files to your local machine and navigate into the project folder.
 
-3. ## Switch to the Desired Project Branch
+2. ## Switch to the Desired Project Branch
 Since the tasks are divided into branches, switch to the specific project you want to run:
 
-Bash
+Bash<br>
 To run Task 1:
 git checkout iris-classification
-
+<br>
 OR,to run Task 2:
 git checkout car-sales-analysis
 
@@ -36,7 +36,8 @@ For Windows:
 
 Bash <br> 
 python -m venv venv <br>
-venv\Scripts\activate <br>
+venv\Scripts\activate <br><br>
+
 For macOS and Linux:
 
 Bash <br>
@@ -45,9 +46,9 @@ source venv/bin/activate
 
 4. ## Install Required Dependencies
 With your virtual environment activated, install the necessary Python libraries. Ensure you have a requirements.txt file in the branch, then run:
-
-Bash
-pip install -r requirements.txt
+<br>
+Bash<br>
+pip install -r requirements.txt<br>
 (Note: If you do not have a requirements file generated yet, you can manually install the core stack for both projects by running: pip install streamlit pandas numpy scikit-learn matplotlib seaborn)
 
 5. ## Launch the Application
