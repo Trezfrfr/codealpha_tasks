@@ -7,7 +7,7 @@ This repository contains multiple independent machine learning tasks. To keep th
 
 Please switch to the corresponding branch to view the code and documentation for each task:
 
-* **Task 1:** `Task1iris-flower-classification-work` branch
+* **Task 1:** `Task1iris-flower-classification` branch
 * **Task 2:** `Task2car-sales-analysis` branch
 
 <br>
