@@ -1,143 +1,139 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler, LabelEncoder, PolynomialFeatures
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
-st.set_page_config(page_title="Iris Predictor Pro", page_icon="🌿", layout="wide")
+st.set_page_config(page_title="Iris Species Predictor", layout="wide")
 
-st.markdown("""
-    <style>
-    div[data-testid="metric-container"] {
-        background-color: #f8f9fa;
-        border: 1px solid #e0e0e0;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.title("🌿 Iris Species Predictor Pro")
-st.markdown("Adjust the flower measurements to predict the species, or view the model's underlying performance metrics.")
-st.divider()
+@st.cache_data
+def load_and_preprocess_raw_data():
+    try:
+        df = pd.read_csv("iris.csv")
+    except FileNotFoundError:
+        st.error("⚠️ The file 'iris.csv' was not found. Please ensure it is saved in the same folder as this script.")
+        st.stop()
+        
+    df.columns = [col.lower().replace('.', '_').replace(' ', '_') for col in df.columns]
+    
+    if 'id' in df.columns:
+        df = df.drop('id', axis=1)
+        
+    if 'variety' in df.columns:
+        df = df.rename(columns={'variety': 'species'})
+    elif 'class' in df.columns:
+        df = df.rename(columns={'class': 'species'})
+        
+    return df
 
 @st.cache_resource
-def load_train_and_evaluate():
-    df = sns.load_dataset('iris')
-    df.rename(columns={
-        'sepal_length': 'SepalLength', 'sepal_width': 'SepalWidth',
-        'petal_length': 'PetalLength', 'petal_width': 'PetalWidth',
-        'species': 'Species'
-    }, inplace=True)
+def train_pipeline_model(df):
+    features = [col for col in df.columns if col != 'species']
+    X = df[features]
+    y = df['species']
     
-    X = df[['SepalLength', 'SepalWidth', 'PetalLength', 'PetalWidth']]
-    y = df['Species']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    label_encoder = LabelEncoder()
-    y_encoded = label_encoder.fit_transform(y)
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
-    
-    pipeline = Pipeline([
-        ('imputer', SimpleImputer(strategy='median')),
-        ('poly_features', PolynomialFeatures(degree=2, interaction_only=False, include_bias=False)),
+    rf_pipeline = Pipeline(steps=[
         ('scaler', StandardScaler()),
-        ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))
+        ('model', RandomForestClassifier(n_estimators=100, random_state=42))
     ])
     
-    pipeline.fit(X_train, y_train)
+    rf_pipeline.fit(X_train, y_train)
+    return rf_pipeline, X_test, y_test, features
+
+df = load_and_preprocess_raw_data()
+model, X_test, y_test, feature_names = train_pipeline_model(df)
+
+st.title("🌸 Iris Flower Intelligence & Predictive Engine")
+
+analysis_mode = st.selectbox(
+    "Select Dashboard Function",
+    [
+        "Dataset Overview & Averages", 
+        "Filter by Species", 
+        "Feature Scatter Analysis", 
+        "Real-time Species Predictor"
+    ]
+)
+
+if analysis_mode == "Dataset Overview & Averages":
+    st.subheader("Average Measurements by Species")
     
-    predictions = pipeline.predict(X_test)
+    avg_data = df.groupby('species').mean().reset_index()
+    st.dataframe(avg_data)
     
-    accuracy = accuracy_score(y_test, predictions)
-    report_dict = classification_report(y_test, predictions, target_names=label_encoder.classes_, output_dict=True)
-    cm = confusion_matrix(y_test, predictions)
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.bar(avg_data['species'], avg_data.iloc[:, 3], color=['#FF9999', '#66B2FF', '#99FF99'], edgecolor='black')
+    ax.set_xlabel("Flower Species")
+    ax.set_ylabel("Average Petal Length (cm)")
+    ax.set_title("Petal Length Comparison Across Species")
+    st.pyplot(fig)
+
+elif analysis_mode == "Filter by Species":
+    st.subheader("Dataset Explorer")
     
-    return pipeline, label_encoder, accuracy, report_dict, cm
-
-pipeline, label_encoder, accuracy, report_dict, cm = load_train_and_evaluate()
-
-tab1, tab2 = st.tabs(["🎯 Live Prediction", "📊 Model Performance"])
-
-with tab1:
-    col_inputs, col_results = st.columns([1, 2], gap="large")
-
-    with col_inputs:
-        st.subheader("📏 Measurements")
+    species_choice = st.selectbox("Filter by specific species", ["All"] + list(df['species'].unique()))
         
-        with st.container():
-            st.markdown("**Sepal Dimensions**")
-            sepal_length = st.slider("Length (cm)", 4.0, 8.0, 5.8, key="sl")
-            sepal_width = st.slider("Width (cm)", 2.0, 4.5, 3.0, key="sw")
+    if species_choice != "All":
+        filtered = df[df['species'] == species_choice]
+    else:
+        filtered = df
+        
+    st.write(f"Found {len(filtered)} records.")
+    st.dataframe(filtered)
+
+elif analysis_mode == "Feature Scatter Analysis":
+    st.subheader("Sepal vs. Petal Dimensions")
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        x_axis = st.selectbox("X-Axis Feature", feature_names, index=0)
+    with c2:
+        y_axis = st.selectbox("Y-Axis Feature", feature_names, index=2)
+    
+    fig, ax = plt.subplots(figsize=(10, 5))
+    colors = {'Iris-setosa': 'red', 'Iris-versicolor': 'green', 'Iris-virginica': 'blue',
+              'setosa': 'red', 'versicolor': 'green', 'virginica': 'blue'}
+              
+    for species in df['species'].unique():
+        subset = df[df['species'] == species]
+        color = colors.get(species, 'purple') 
+        ax.scatter(subset[x_axis], subset[y_axis], label=species, color=color, alpha=0.7, edgecolors='k')
+        
+    ax.set_xlabel(x_axis.replace('_', ' ').title())
+    ax.set_ylabel(y_axis.replace('_', ' ').title())
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.5)
+    st.pyplot(fig)
+
+elif analysis_mode == "Real-time Species Predictor":
+    st.subheader("AI Classification Engine")
+    
+    predictions = model.predict(X_test)
+    acc = accuracy_score(y_test, predictions)
+    
+    st.info(f"Current core model structural accuracy: {acc * 100:.2f}%")
+    
+    with st.form("classification_form"):
+        st.write("Adjust the slider dimensions (in cm) to predict the flower species:")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            s_length = st.slider("Sepal Length (cm)", float(df.iloc[:,0].min()), float(df.iloc[:,0].max()), float(df.iloc[:,0].mean()))
+            s_width = st.slider("Sepal Width (cm)", float(df.iloc[:,1].min()), float(df.iloc[:,1].max()), float(df.iloc[:,1].mean()))
+        with c2:
+            p_length = st.slider("Petal Length (cm)", float(df.iloc[:,2].min()), float(df.iloc[:,2].max()), float(df.iloc[:,2].mean()))
+            p_width = st.slider("Petal Width (cm)", float(df.iloc[:,3].min()), float(df.iloc[:,3].max()), float(df.iloc[:,3].mean()))
             
-        st.write("")
+        execute = st.form_submit_button("Predict Species")
         
-        with st.container():
-            st.markdown("**Petal Dimensions**")
-            petal_length = st.slider("Length (cm)", 1.0, 7.0, 4.3, key="pl")
-            petal_width = st.slider("Width (cm)", 0.1, 2.5, 1.3, key="pw")
-
-    input_data = pd.DataFrame({
-        'SepalLength': [sepal_length],
-        'SepalWidth': [sepal_width],
-        'PetalLength': [petal_length],
-        'PetalWidth': [petal_width]
-    })
-
-    prediction_encoded = pipeline.predict(input_data)
-    prediction_species = label_encoder.inverse_transform(prediction_encoded)[0]
-    prediction_proba = pipeline.predict_proba(input_data)[0]
-
-    with col_results:
-        st.subheader("Results")
+    if execute:
+        payload = pd.DataFrame([[s_length, s_width, p_length, p_width]], columns=feature_names)
         
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Sepal Length", f"{sepal_length} cm")
-        m2.metric("Sepal Width", f"{sepal_width} cm")
-        m3.metric("Petal Length", f"{petal_length} cm")
-        m4.metric("Petal Width", f"{petal_width} cm")
-        
-        st.write("")
-        
-        species_display = {'setosa': '🌸 Setosa', 'versicolor': '🌼 Versicolor', 'virginica': '🌺 Virginica'}
-        st.success(f"### The model predicts: **{species_display.get(prediction_species, prediction_species.capitalize())}**")
-        
-        st.markdown("#### Confidence Breakdown")
-        proba_df = pd.DataFrame({
-            'Species': [name.capitalize() for name in label_encoder.classes_],
-            'Confidence (%)': prediction_proba * 100 
-        })
-        st.bar_chart(proba_df.set_index('Species'), color="#4CAF50", height=200)
-
-with tab2:
-    st.subheader("Testing Set Evaluation (20% of Data)")
-    
-    st.metric(label="Overall Test Accuracy", value=f"{accuracy * 100:.1f}%")
-    st.divider()
-    
-    col_metrics1, col_metrics2 = st.columns(2)
-    
-    with col_metrics1:
-        st.markdown("#### Confusion Matrix")
-        fig, ax = plt.subplots(figsize=(6, 4))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                    xticklabels=[name.capitalize() for name in label_encoder.classes_],
-                    yticklabels=[name.capitalize() for name in label_encoder.classes_], ax=ax)
-        plt.ylabel('Actual Species')
-        plt.xlabel('Predicted Species')
-        st.pyplot(fig)
-        
-    with col_metrics2:
-        st.markdown("#### Classification Report")
-        report_df = pd.DataFrame(report_dict).transpose()
-        
-        styled_report = report_df.style.format(subset=['precision', 'recall', 'f1-score'], formatter="{:.2f}")
-        st.dataframe(styled_report, use_container_width=True)
-        
-        st.info("**Tip:** Look at the 'recall' metric. If it is 1.00, it means the model successfully identified 100% of the flowers belonging to that specific species in the test set.")
+        prediction = model.predict(payload)[0]
+        st.success(f"### Predicted Species: 🌺 **{prediction.title()}**")
