@@ -23,10 +23,10 @@ Both projects in this repository are built using Python and Streamlit. To run ei
 Since the tasks are divided into branches, switch to the specific project you want to run:
 
 Bash
-# To run Task 1:
+To run Task 1:
 git checkout iris-classification
 
-# OR, to run Task 2:
+OR,to run Task 2:
 git checkout car-sales-analysis
 
 3. ## Create a Virtual Environment (Recommended)
