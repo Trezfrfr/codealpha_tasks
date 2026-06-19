@@ -34,12 +34,12 @@ It is best practice to create a virtual environment to prevent dependency confli
 
 For Windows:
 
-Bash
+Bash <br> 
 python -m venv venv <br>
-venv\Scripts\activate
+venv\Scripts\activate <br>
 For macOS and Linux:
 
-Bash
+Bash <br>
 python3 -m venv venv <br>
 source venv/bin/activate
 
